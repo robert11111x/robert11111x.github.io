@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Интерактивный путеводитель по достопримечательностям Мордовии и Саранска">
+  <title>Мордовия у моря: путеводитель по Саранску</title>
+  <style>
+    :root {
+      --ink: #18281f;
+      --forest: #23583a;
+      --lime: #d9ef78;
+      --cream: #f4f1e6;
+      --orange: #ee7936;
+      --line: rgba(24, 40, 31, .14);
+      --white: #fff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+    }
+    a { color: inherit; }
+    button, input, select { font: inherit; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+    .topbar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 20;
+      background: var(--cream);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: -.02em; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--lime); display: grid; place-items: center;
+      border: 2px solid var(--ink); font-size: 20px;
+    }
+    nav { display: flex; gap: 26px; font-size: 14px; font-weight: 800; }
+    nav a { text-decoration: none; }
+    nav a:hover { color: var(--orange); }
+    .hero {
+      min-height: 410px;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      align-items: end;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-copy { padding: 58px 0 48px; position: relative; z-index: 2; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      text-transform: uppercase; letter-spacing: .14em;
+      font-size: 12px; font-weight: 900; margin-bottom: 18px;
+    }
+    .eyebrow::before { content: ""; width: 34px; height: 3px; background: var(--orange); }
+    h1 { margin: 0; max-width: 680px; font-size: clamp(52px, 7vw, 96px); line-height: .86; letter-spacing: -.065em; }
+    h1 span { color: var(--forest); }
+    .hero-text { max-width: 560px; margin: 24px 0 0; font-size: 18px; line-height: 1.6; }
+    .hero-art { height: 410px; position: relative; align-self: end; }
+    .sun { position: absolute; width: 280px; height: 280px; border-radius: 50%; right: 20px; bottom: 25px; background: var(--lime); }
+    .land {
+      position: absolute; width: 390px; height: 290px; right: -35px; bottom: -55px;
+      border-radius: 48% 52% 0 0; background: var(--forest);
+      transform: rotate(-8deg);
+    }
+    .building {
+      position: absolute;
+      right: 118px;
+      bottom: 50px;
+      width: 230px;
+      height: 260px;
+      z-index: 3;
+    }
+    .building svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    section { scroll-margin-top: 24px; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; margin: 74px 0 24px; }
+    .section-head h2 { margin: 0; font-size: clamp(34px, 5vw, 58px); letter-spacing: -.045em; }
+    .count { font-weight: 900; color: var(--forest); }
+    .finder {
+      display: grid; grid-template-columns: 280px 1fr; gap: 16px;
+      padding: 16px; background: var(--ink); border-radius: 22px;
+    }
+    .controls { padding: 12px 6px; color: var(--white); }
+    .control-label { display: block; margin: 16px 8px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+    .budget-value { color: var(--lime); font-size: 28px; font-weight: 900; margin: 0 8px 14px; }
+    input[type="range"] { width: calc(100% - 16px); margin: 8px; accent-color: var(--lime); }
+    .filter-group { display: grid; gap: 8px; margin: 0 8px; }
+    .filter-btn {
+      border: 1px solid rgba(255,255,255,.2); background: transparent; color: var(--white);
+      border-radius: 12px; padding: 12px 13px; text-align: left; cursor: pointer; font-weight: 800;
+    }
+    .filter-btn.active { background: var(--lime); color: var(--ink); border-color: var(--lime); }
+    .map-wrap { min-height: 520px; border-radius: 15px; overflow: hidden; background: #dfe8dc; position: relative; }
+    #yandexMap {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      display: block;
+      z-index: 1;
+      background: #edf0e7;
+    }
+    #placeCards { margin-top: 20px; }
+    .map-status {
+      position: absolute; left: 12px; bottom: 12px;
+      background: rgba(255,255,255,.94); border-radius: 12px; padding: 9px 12px;
+      font-size: 12px; font-weight: 900; box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .place-card {
+      background: var(--white); border: 1px solid var(--line); border-radius: 18px;
+      padding: 18px; min-height: 150px; cursor: pointer; transition: .2s ease;
+    }
+    .place-card:hover { transform: translateY(-3px); border-color: var(--forest); }
+    .place-card.active {
+      grid-column: 1 / -1;
+      border-color: var(--forest);
+      box-shadow: 0 12px 30px rgba(24,40,31,.08);
+    }
+    .place-card .top { display: flex; justify-content: space-between; gap: 12px; }
+    .badge { border-radius: 999px; background: var(--lime); padding: 6px 9px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+    .place-card h3 { margin: 16px 0 6px; font-size: 20px; }
+    .place-card p { margin: 0; color: #647066; line-height: 1.45; font-size: 14px; }
+    .place-details {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height .25s ease, opacity .2s ease, margin .25s ease;
+    }
+    .place-card.active .place-details {
+      max-height: none;
+      margin-top: 14px;
+      opacity: 1;
+    }
+    .place-photo {
+      border: 1px dashed rgba(24,40,31,.35);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #7b847d;
+      font-size: 13px;
+      font-weight: 800;
+      overflow: hidden;
+    }
+    .place-photo.placeholder {
+      height: 170px;
+      background: #edf0e7;
+    }
+    .place-photo.with-photo {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      background: transparent;
+      border-style: solid;
+    }
+    .place-photo img {
+      width: 100%;
+      height: auto;
+      max-height: 520px;
+      object-fit: contain;
+      display: block;
+    }
+    .place-photo-gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .place-photo-gallery .place-photo {
+      width: 100%;
+    }
+    .routes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .route {
+      min-height: 250px; border-radius: 22px; padding: 24px;
+      border: 1px solid var(--line); background: var(--white);
+      display: flex; flex-direction: column;
+    }
+    .route:nth-child(2) { background: var(--lime); }
+    .route:nth-child(3) { background: var(--orange); color: var(--ink); }
+    .route-num { width: 44px; height: 44px; border: 2px solid currentColor; border-radius: 50%; display: grid; place-items: center; font-weight: 900; }
+    .route h3 { margin: 28px 0 8px; font-size: 24px; }
+    .route p { line-height: 1.5; margin: 0 0 18px; }
+    .route ol { margin: auto 0 0; padding-left: 18px; font-size: 14px; line-height: 1.7; }
+    .history {
+      margin-top: 74px;
+      border-radius: 22px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+    .history h2 { margin: 0 0 10px; font-size: clamp(34px, 5vw, 54px); letter-spacing: -.045em; }
+    .history-lead { margin: 0; color: #647066; line-height: 1.65; }
+    .history-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .history-fact { background: var(--cream); border-radius: 14px; padding: 16px; }
+    .history-fact strong { display: block; color: var(--forest); font-size: 24px; margin-bottom: 5px; }
+    .history-fact p { margin: 0; line-height: 1.45; font-size: 14px; }
+    .quiz-layout { display: grid; grid-template-columns: .75fr 1.25fr; gap: 16px; margin-bottom: 80px; }
+    .quiz-aside { background: var(--forest); color: var(--white); border-radius: 22px; padding: 28px; min-height: 420px; }
+    .quiz-aside h3 { font-size: 38px; margin: 0 0 12px; }
+    .quiz-aside p { line-height: 1.5; color: rgba(255,255,255,.78); }
+    .score-ring { width: 150px; height: 150px; border: 14px solid var(--lime); border-radius: 50%; display: grid; place-items: center; font-size: 42px; font-weight: 900; margin: 70px auto 0; }
+    .quiz-box { background: var(--white); border: 1px solid var(--line); border-radius: 22px; padding: 28px; }
+    .question { display: none; }
+    .question.active { display: block; }
+    .question h3 { margin: 0 0 20px; font-size: 26px; }
+    .answers { display: grid; gap: 9px; }
+    .answer {
+      border: 1px solid var(--line); background: var(--cream); border-radius: 12px;
+      padding: 14px 15px; text-align: left; cursor: pointer; font-weight: 800;
+    }
+    .answer.correct { background: #dff1c2; border-color: #7cab46; }
+    .answer.wrong { background: #f9d9ca; border-color: var(--orange); }
+    .quiz-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+    .step { color: #7a837c; font-size: 13px; font-weight: 900; }
+    .next-btn, .reset-btn {
+      border: 0; border-radius: 999px; background: var(--ink); color: var(--white);
+      padding: 12px 18px; cursor: pointer; font-weight: 900;
+    }
+    .meta {
+      background: var(--ink); color: var(--white); padding: 38px 0;
+    }
+    .meta-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 30px; font-size: 13px; line-height: 1.7; }
+    .meta strong { color: var(--lime); }
+    .meta p { margin: 4px 0; }
+    @media (max-width: 900px) {
+      nav { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-art { position: absolute; right: -120px; opacity: .55; }
+      .finder { grid-template-columns: 1fr; }
+      .controls { display: grid; grid-template-columns: 180px 1fr; align-items: start; }
+      .controls > div:first-child { grid-row: span 2; }
+      .cards, .routes { grid-template-columns: repeat(2, 1fr); }
+      .quiz-layout { grid-template-columns: 1fr; }
+      .history { grid-template-columns: 1fr; }
+      .quiz-aside { min-height: 220px; }
+      .score-ring { width: 110px; height: 110px; margin: 20px 0 0; font-size: 34px; }
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .shell { width: min(100% - 20px, 1180px); }
+      .topbar { height: 62px; }
+      .brand { font-size: 14px; }
+      .brand-mark { width: 36px; height: 36px; }
+      .hero { min-height: 430px; }
+      .hero-copy { padding-top: 70px; }
+      h1 { font-size: 54px; }
+      .hero-text { font-size: 15px; max-width: 330px; }
+      .section-head { margin-top: 48px; }
+      .controls { display: block; }
+      .filter-group { grid-template-columns: 1fr 1fr; }
+      .map-wrap, #yandexMap { height: 420px; min-height: 420px; }
+      .cards, .routes { grid-template-columns: 1fr; }
+      .place-card.active { grid-column: span 1; }
+      .place-card { min-height: 150px; }
+      .history-facts { grid-template-columns: 1fr; }
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar shell">
+    <div class="brand"><span class="brand-mark">М</span><span>МОРДОВИЯ / 13</span></div>
+    <nav aria-label="Основная навигация">
+      <a href="#map-section">Карта</a>
+      <a href="#routes">Маршруты</a>
+      <a href="#quiz">Викторина</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="shell hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Гид по региону</div>
+        <h1>ПОЗНАЙ <span>МОРДОВИЮ</span></h1>
+        <p class="hero-text">От городской истории до лесных троп: соберите свой день в Саранске и выберите маршрут выходного дня по бюджету.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="land"></div>
+        <div class="building">
+          <svg viewBox="0 0 230 260" role="img" aria-label="Домик Мордовии">
+            <path d="M30 110 L115 58 L200 110 L200 238 L30 238 Z"
+                  fill="#ee7936" stroke="#18281f" stroke-width="10" stroke-linejoin="miter"/>
+            <path d="M30 110 L115 58 L200 110"
+                  fill="none" stroke="#18281f" stroke-width="10" stroke-linejoin="miter"/>
+            <rect x="92" y="168" width="46" height="70"
+                  fill="#f4f1e6" stroke="#18281f" stroke-width="9"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <section id="map-section" class="shell">
+      <div class="section-head">
+        <h2>Карта места</h2>
+        <span class="count" id="placeCount">10 объектов</span>
+      </div>
+      <div class="finder">
+        <aside class="controls">
+          <div>
+            <span class="control-label">Бюджет на объект</span>
+            <div class="budget-value" id="budgetValue">до 3 000 ₽</div>
+            <input id="budgetSlider" type="range" min="0" max="3000" step="100" value="3000" aria-label="Максимальный бюджет">
+          </div>
+          <div>
+            <span class="control-label">Настроение</span>
+            <div class="filter-group" id="categoryFilters">
+              <button class="filter-btn active" data-category="all" type="button">Все места</button>
+              <button class="filter-btn" data-category="city" type="button">Город</button>
+              <button class="filter-btn" data-category="nature" type="button">Природа</button>
+              <button class="filter-btn" data-category="culture" type="button">Культура</button>
+            </div>
+          </div>
+        </aside>
+        <div class="map-wrap">
+          <iframe
+  id="yandexMap"
+  title="Карта достопримечательностей Саранска"
+  src="https://yandex.ru/map-widget/v1/?ll=45.183937%2C54.187252&z=12"
+  width="100%"
+  height="520"
+  frameborder="0"
+  allowfullscreen>
+</iframe>
+          <div class="map-status" id="mapStatus">Найдено: 10 объектов</div>
+        </div>
+      </div>
+      <div class="cards" id="placeCards" aria-live="polite"></div>
+    </section>
+
+    <section id="routes" class="shell">
+      <div class="section-head">
+        <h2>Выходные по плану</h2>
+      </div>
+      <div class="routes">
+        <article class="route">
+          <span class="route-num">01</span>
+          <h3>Город за 1 день</h3>
+          <p>Маршрут для знакомства с главным собором, музейными экспозициями и современным центром Саранска.</p>
+          <ol>
+            <li>Собор Феодора Ушакова</li>
+            <li>Площадь Тысячелетия</li>
+            <li>Музей изобразительных искусств им. С.Д. Эрьзи</li>
+          </ol>
+        </article>
+        <article class="route">
+          <span class="route-num">02</span>
+          <h3>Культура бесплатно</h3>
+          <p>Бюджетная программа из зелёной прогулки, национального искусства и уличных видов города.</p>
+          <ol>
+            <li>Парк культуры и отдыха им. А.С. Пушкина</li>
+            <li>Площадь Тысячелетия</li>
+            <li>Республиканский театр кукол</li>
+          </ol>
+        </article>
+        <article class="route">
+          <span class="route-num">03</span>
+          <h3>Природа и спорт</h3>
+          <p>Активный выходной для зелёных троп, городской прогулки и знакомства со спортивным комплексом.</p>
+          <ol>
+            <li>Ботанический сад имени В.Н. Ржавитина</li>
+            <li>Парк культуры и отдыха им. А.С. Пушкина</li>
+            <li>Стадион «Мордовия Арена»</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="history shell" aria-labelledby="history-title">
+      <div>
+        <div class="eyebrow">Краткая история</div>
+        <h2 id="history-title">Мордовия и Саранск</h2>
+        <p class="history-lead">
+          Коренное население региона составляют мокша и эрзя — два родственных финно-угорских народа
+          с богатой языковой, ремесленной и фольклорной традицией. На их земле издревле пересекались
+          торговые и военные пути Поволжья. Памятники деревянного зодчества почти не сохранились,
+          поэтому национальную материальную культуру сегодня можно изучать в музеях и собраниях
+          декоративно-прикладного искусства.
+        </p>
+      </div>
+      <div class="history-facts">
+        <article class="history-fact">
+          <strong>1641</strong>
+          <p>Год основания Саранска как сторожевой крепости для защиты юго-восточных рубежей Московского государства.</p>
+        </article>
+        <article class="history-fact">
+          <strong>1780</strong>
+          <p>Саранск получил статус уездного города и стал важным торгово-административным центром Поволжья.</p>
+        </article>
+        <article class="history-fact">
+          <strong>1928</strong>
+          <p>Образован Мордовский округ, который стал основой современной республиканской государственности Мордовии.</p>
+        </article>
+        <article class="history-fact">
+          <strong>2006</strong>
+          <p>Освящён собор Феодора Ушакова — один из главных символов современной Саранска и Мордовии.</p>
+        </article>
+        <article class="history-fact">
+          <strong>Мокша и эрзя</strong>
+          <p>Два коренных народа Мордовии дали музеям и литературе яркую традицию декоративного искусства и фольклора.</p>
+        </article>
+        <article class="history-fact">
+          <strong>Современный центр</strong>
+          <p>Сегодня Саранск известен театрами, университетами, архитектурой, спортивными объектами и фестивалями региона.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="quiz" class="shell">
+      <div class="section-head">
+        <h2>Проверь Мордовию</h2>
+      </div>
+      <div class="quiz-layout">
+        <aside class="quiz-aside">
+          <h3>5 вопросов</h3>
+          <p>Немного истории и фактов о регионе. Выберите ответ — подсказка появится сразу.</p>
+          <div class="score-ring" id="scoreRing">0/5</div>
+        </aside>
+        <div class="quiz-box">
+          <div id="questions"></div>
+          <div class="quiz-actions">
+            <span class="step" id="quizStep">Вопрос 1 из 5</span>
+            <button class="next-btn" id="nextBtn" type="button">Далее</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="meta">
+    <div class="shell meta-grid">
+      <div>
+        <strong>Проект участника конкурса</strong>
+        <p>ГБПОУ РМ «Саранский государственный промышленно - экономический колледж»</p>
+        <p>Республиканский конкурс Интернет-ресурсов среди студентов СПО Республики Мордовия, 2026 г.</p>
+      </div>
+      <div>
+        <p><strong>Автор:</strong> Швалев Николай Алексеевич</p>
+        <p><strong>Руководитель:</strong> Падерова Марина Алексеевна</p>
+        <p><strong>Номинация:</strong> «Web-проект»</p>
+      </div>
+      <div>
+        <p><strong>Название проекта:</strong><br>Интерактивный путеводитель по Мордовии и Саранску для студентов и туристов</p>
+        <p><strong>Дата разработки:</strong> 20.11.2026</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const places = [
+      { name: "Собор Феодора Ушакова", photo1: "images/Собор-Саранск7.jpg", photo2: "images/Фотка_790784.jpg", lon: 45.1815555, lat: 54.1814704, budget: 300, category: "culture", desc: "Крупнейший православный собор Саранска и главный памятник мордовской столицы. Белый фасад, золотые купола и просторная площадь делают это место ярким символом города." },
+      { name: "Площадь Тысячелетия", photo1: "images/old_109804.jpg", photo2: "images/Vb4tp2oi42Y.jpg", lon: 45.1839378, lat: 54.1872529, budget: 0, category: "city", desc: "Главное торжественное пространство Саранска возле символических монументов и флагов. Площадь подходит для прогулки, фотографий и знакомства с современным центром города." },
+      { name: "Музей мордовской народной культуры", photo1: "images/images123.jpg", photo2: "images/images123.jpg", lon: 45.1929612, lat: 54.1806166, budget: 250, category: "culture", desc: "Интересное место для знакомства с традициями мокши и эрзи: национальные костюмы, текстиль, предметы быта и ремёсла помогают увидеть историю мордовского народа." },
+      { name: "Ботанический сад имени В.Н. Ржавитина",photo1: "images/49EneoAsCUjYC2KV_xP-HrLwBGDpc9p-NUVVPz-Uckv2OKzZjv5W5HD4GWtokiJyjo_GtQcUwuyMwwTFM1pmy_6C.jpg", photo2: "images/v_botanicheskiy_sad_saranska_priglashayut_na_meropriyatie_o_zozh.jpg",  lon: 45.2049485, lat: 54.16179, budget: 400, category: "nature", desc: "Зелёный уголок для спокойной прогулки среди редких и коллекционных растений. Тропы сада особенно красивы в сезон цветения и подходят для студентов и любителей природы." },
+      { name: "Стадион Мордовия Арена", photo1: "images/1522417998_0_255_3072_1983_1920x0_80_0_0_84241a6fa5bb3234475d1674a7ae8dec.jpg", photo2: "images/stadion.jpg", lon: 45.2044289, lat: 54.1818304, budget: 1500, category: "city", desc: "Современный футбольный стадион с узнаваемой архитектурой и большим спортивным залом впечатлений. Здесь проходят матчи, большие мероприятия и экскурсионные посещения." },
+      { name: "Музей изобразительных искусств им. С.Д. Эрьзи", photo1: "images/photo123.jpg", photo2: "images/Здание_Мордовского_республиканского_музея_изобразительных_искусств_имени_С.Д._Эрьзи.01.jpg", lon: 45.179702, lat: 54.185195, budget: 250, category: "culture", desc: "Один из ведущих художественных музеев региона. В коллекции — работы Федота Сычкова и Степана Эрьзи, живопись, графика, скульптура и временные выставки мордовских и российских художников." },
+      { name: "Парк культуры и отдыха им. А.С. Пушкина", photo1: "images/QYfh5MgtZVhe732AFleCzw.jpg", photo2: "images/NIkXYnklcxuKIbqm0Ls1Bg.JPG", lon: 45.1838506, lat: 54.1765739, budget: 0, category: "nature", desc: "Популярное место для прогулок с аллеями, зелёными зонами и площадками для активного отдыха. Парк удобно совмещать с прогулкой по центру Саранска." },
+      { name: "Мордовский национальный драматический театр", photo1: "images/6889e3ad4e543909ed7661a5.jpg", photo2: "images/parallax_2.jpg", lon: 45.1915525, lat: 54.1806707, budget: 500, category: "culture", desc: "Крупнейшая площадка для драматических постановок на эрзянском и русском языках. Репертуар включает классические пьесы, современные постановки и спектакли для молодёжной аудитории." },
+      { name: "Республиканский театр кукол", photo1: "images/0d13e3a23464b2a51bbcd72264c75e7c.jpg", photo2: "images/photo600-12752922.jpg", lon: 45.1896913, lat: 54.1918868, budget: 300, category: "culture", desc: "Яркий театр с кукольными постановками для детей и взрослых. Сцена знакомит зрителей с сказками, мордовскими историями и современной театральной режиссурой." },
+      { name: "Театр оперы и балета", photo1: "images/images111.jpg", photo2: "images/mechanics_2.jpg", lon: 45.1800964, lat: 54.1859697, budget: 2500, category: "culture", desc: "Главная оперная и балетная сцена Мордовии с спектаклями, концертами и премьерными постановками. Здание театра привлекает богатой программой и атмосферой большого культурного события." },
+    ];
+
+    const budgetSlider = document.getElementById("budgetSlider");
+    const budgetValue = document.getElementById("budgetValue");
+    const placeCards = document.getElementById("placeCards");
+    const placeCount = document.getElementById("placeCount");
+    const mapStatus = document.getElementById("mapStatus");
+    let activeCategory = "all";
+
+    function formatBudget(value) {
+      return value === 0 ? "Бесплатно" : `от ${value.toLocaleString("ru-RU")} ₽`;
+    }
+
+    function objectPlural(count) {
+      const lastDigit = count % 10;
+      const lastTwoDigits = count % 100;
+      if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "объектов";
+      if (lastDigit === 1) return "объект";
+      if (lastDigit >= 2 && lastDigit <= 4) return "объекта";
+      return "объектов";
+    }
+
+    function updateMap() {
+      const budget = Number(budgetSlider.value);
+      const filtered = places.filter(place =>
+        place.budget <= budget &&
+        (activeCategory === "all" || place.category === activeCategory)
+      );
+
+      budgetValue.textContent = budget === 3000 ? "до 3 000 ₽" : `до ${budget.toLocaleString("ru-RU")} ₽`;
+      placeCount.textContent = `${filtered.length} ${objectPlural(filtered.length)}`;
+      mapStatus.textContent = `Найдено: ${filtered.length} ${objectPlural(filtered.length)}`;
+
+      placeCards.innerHTML = filtered.length
+        ? filtered.map((place, index) => `
+          <article class="place-card" data-name="${place.name}">
+            <div class="top"><span class="badge">${formatBudget(place.budget)}</span><span>${String(places.indexOf(place) + 1).padStart(2, "0")}</span></div>
+            <h3>${place.name}</h3>
+            <p>${place.desc}</p>
+            <div class="place-details">
+              <div class="place-photo-gallery">
+                <div class="place-photo ${place.photo1 ? "with-photo" : "placeholder"}">
+                  ${place.photo1 ? `<img src="${place.photo1}" alt="${place.name}, фото 1">` : "Фото 1"}
+                </div>
+                <div class="place-photo ${place.photo2 ? "with-photo" : "placeholder"}">
+                  ${place.photo2 ? `<img src="${place.photo2}" alt="${place.name}, фото 2">` : "Фото 2"}
+                </div>
+              </div>
+            </div>
+          </article>`).join("")
+        : `<article class="place-card"><h3>Мест не найдено</h3><p>Увеличьте бюджет или выберите другую категорию.</p></article>`;
+
+      document.querySelectorAll(".place-card[data-name]").forEach(card => {
+        card.addEventListener("click", () => {
+          const willOpen = !card.classList.contains("active");
+          document.querySelectorAll(".place-card").forEach(item => item.classList.remove("active"));
+          if (!willOpen) return;
+          card.classList.add("active");
+        });
+      });
+    }
+
+    budgetSlider.addEventListener("input", updateMap);
+    document.querySelectorAll(".filter-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+        activeCategory = button.dataset.category;
+        updateMap();
+      });
+    });
+
+    const quizData = [
+      { question: "В каком году основана Саранск как сторожевая крепость?", answers: ["1641", "1780", "1928"], correct: 0, fact: "Саранск основан в 1641 году как сторожевая крепость Московского государства." },
+      { question: "Какие два коренных народа проживают в Мордовии?", answers: ["Мокша и эрзя", "Татары и башкиры", "Коми и удмурты"], correct: 0, fact: "Коренные группы мордвы — мокша и эрзя." },
+      { question: "В каком году Саранск получил статус уездного города?", answers: ["1641", "1780", "1934"], correct: 1, fact: "В 1780 году Саранск стал уездным городом." },
+      { question: "Что стало основой современной республиканской государственности Мордовии?", answers: ["Мордовский округ", "Казанское ханство", "Саранская губерния"], correct: 0, fact: "Мордовский округ образован в 1928 году." },
+      { question: "В каком году освящён собор Феодора Ушакова?", answers: ["1993", "2006", "2018"], correct: 1, fact: "Собор святого Феодора Ушакова освящён в 2006 году." }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+    let quizFinished = false;
+    const questionsEl = document.getElementById("questions");
+    const nextBtn = document.getElementById("nextBtn");
+    const quizStep = document.getElementById("quizStep");
+    const scoreRing = document.getElementById("scoreRing");
+
+    function renderQuestion() {
+      answered = false;
+      const item = quizData[currentQuestion];
+      quizStep.textContent = `Вопрос ${currentQuestion + 1} из ${quizData.length}`;
+      nextBtn.textContent = currentQuestion === quizData.length - 1 ? "Результат" : "Далее";
+      questionsEl.innerHTML = `
+        <div class="question active">
+          <h3>${item.question}</h3>
+          <div class="answers">
+            ${item.answers.map((answer, index) => `<button class="answer" type="button" data-index="${index}">${answer}</button>`).join("")}
+          </div>
+        </div>`;
+      document.querySelectorAll(".answer").forEach(button => {
+        button.addEventListener("click", () => selectAnswer(button));
+      });
+    }
+
+    function selectAnswer(button) {
+      if (answered) return;
+      answered = true;
+      const index = Number(button.dataset.index);
+      const item = quizData[currentQuestion];
+      document.querySelectorAll(".answer").forEach((answer, answerIndex) => {
+        answer.disabled = true;
+        if (answerIndex === item.correct) answer.classList.add("correct");
+      });
+      if (index === item.correct) {
+        score++;
+        scoreRing.textContent = `${score}/${quizData.length}`;
+      } else {
+        button.classList.add("wrong");
+      }
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (quizFinished) {
+        currentQuestion = 0;
+        score = 0;
+        quizFinished = false;
+        scoreRing.textContent = "0/5";
+        renderQuestion();
+        return;
+      }
+      if (!answered) {
+        quizStep.textContent = "Сначала выберите ответ";
+        return;
+      }
+      if (currentQuestion < quizData.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      } else {
+        questionsEl.innerHTML = `<div class="question active"><h3>Готово: ${score} из ${quizData.length}</h3><p>${score === quizData.length ? "Вы отлично знаете Мордовию!" : "Хороший старт — повторите карту и маршрут города."}</p></div>`;
+        quizStep.textContent = "Викторина завершена";
+        nextBtn.textContent = "Ещё раз";
+        quizFinished = true;
+      }
+    });
+
+    updateMap();
+    renderQuestion();
+  </script>
+</body>
+</html>
